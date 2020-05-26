@@ -11,6 +11,7 @@
 
 namespace cx::core::cmdline
 {
+    // to be used when visisting std::variant.
     template <typename ...Ts>
     struct ArgumentVisitor : Ts... {
         ArgumentVisitor(const Ts&... args) : Ts(args)... {}
@@ -34,12 +35,9 @@ namespace cx::core::cmdline
     // OptionType is a user-defined struct, containing the fields to be set by the command line
     template <typename OptionType>
     struct OptionsParser : OptionType {
-        // This seemed like magic at first. But it's not. "std::string OptionType::*" is a way of saying: 
-        // we want a pointer-to-member-of-OptionType-with-type-std::string. This has to be done, as 
-        // OptionsParser inherits from OptionType, that way this class gets access to it's pointers.
+        // As one can see here; std::string OptionType::* is a pointer to member of OptionType with type string, etc
         using Property = std::variant<std::string OptionType::*, int OptionType::*, cx::uint OptionType::*, bool OptionType::*>;
         using Argument = std::tuple<std::string, Property, PropertyType>;
-        using OwningOP = std::unique_ptr<OptionsParser>;
         ~OptionsParser() = default;
 
         auto parse(int argument_count, const char** arguments) -> OptionType {
@@ -70,6 +68,7 @@ namespace cx::core::cmdline
         OptionsParser& operator=(const OptionsParser&) = delete;
         OptionsParser& operator=(OptionsParser&&) = delete;
         
+        /// TODO: Beware - there be exception-y waters ahead. And we do not give a caught at all. Possibly will be implemented.
         auto register_parsers(Argument a) {
             auto arg_name   = std::get<0>(a);
             auto property   = std::get<1>(a);
@@ -108,6 +107,7 @@ namespace cx::core::cmdline
                         }
                     },
                     [this, type](bool OptionType::* b){
+                        // This is to show that, if we set a flag to something else, it will simply do nothing. Error handling will be added (maybe)
                         if(type == PropertyType::FLAG) {
                             this->*b = true;
                         }
