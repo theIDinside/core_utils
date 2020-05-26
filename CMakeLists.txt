@@ -24,5 +24,5 @@ endif()
 
 include_directories(./src)
 
-add_executable(core_test ./src/main.cpp)
+add_executable(core_test ./src/main.cpp ./src/core/core.cpp)
 target_link_libraries(core_test fmt::fmt)
