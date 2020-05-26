@@ -23,6 +23,8 @@ if(NOT fmt_POPULATED)
 endif()
 
 include_directories(./src)
-
+# My own dependencies, that's part of this core utils package, but not necessarily part of the source tree, are found in ./deps/local
+# (to be frank, I don't know how to package up libraries nicely quite yet. C++ is horrible in that way)
+add_subdirectory(./deps/local/instrumentation)
 add_executable(core_test ./src/main.cpp ./src/core/core.cpp)
-target_link_libraries(core_test fmt::fmt)
+target_link_libraries(core_test fmt::fmt instrumentation)
