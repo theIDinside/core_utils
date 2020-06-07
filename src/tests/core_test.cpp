@@ -7,11 +7,10 @@ constexpr auto SOME_INT_DEFAULT_VAL = 10;
 constexpr auto SOME_UINT_DEF_VAL    = 20;
 constexpr auto SOME_FLAG_DEFAULT    = false;
 
-
 // Using command line parser requires user to define their own struct like this. Current types supported inside: unsigned int (here called cx::uint), int, std::string and bool
 struct CommandLineOptions {
-    std::string title   {SOME_DEFAULT_STR};
-    int some_int        {SOME_INT_DEFAULT_VAL};
+    std::string title   {SOME_DEFAULT_STR};	    
+	int some_int        {SOME_INT_DEFAULT_VAL};
     cx::uint some_uint  {SOME_UINT_DEF_VAL};
     bool some_flag      {SOME_FLAG_DEFAULT};
 };

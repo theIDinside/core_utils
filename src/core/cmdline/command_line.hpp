@@ -32,11 +32,21 @@ namespace cx::core::cmdline
         MULTI_VALUE // Only argument values of string, can be multi value. Multi value integers doesn't make sense.
     };
 
+	template <typename ...Ts>
+	struct Option {
+		static constexpr auto type_count = sizeof...(Ts);
+	};
+
     // OptionType is a user-defined struct, containing the fields to be set by the command line
     template <typename OptionType>
     struct OptionsParser : OptionType {
+	// pointer-to-member: ptm
+	using ptm_string 	= std::string OptionType::*;
+	using ptm_int 		= int OptionType::*;
+	using ptm_uint 		= cx::uint OptionType::*;
+	using ptm_bool		= bool OptionType::*;
         // As one can see here; std::string OptionType::* is a pointer to member of OptionType with type string, etc
-        using Property = std::variant<std::string OptionType::*, int OptionType::*, cx::uint OptionType::*, bool OptionType::*>;
+        using Property = std::variant<ptm_string, ptm_int, ptm_uint, ptm_bool>;
         using Argument = std::tuple<std::string, Property, PropertyType>;
         ~OptionsParser() = default;
 
@@ -67,7 +77,7 @@ namespace cx::core::cmdline
         OptionsParser(OptionsParser&&) = delete;
         OptionsParser& operator=(const OptionsParser&) = delete;
         OptionsParser& operator=(OptionsParser&&) = delete;
-        
+
         /// TODO: Beware - there be exception-y waters ahead. And we do not give a caught at all. Possibly will be implemented.
         auto register_parsers(Argument a) {
             auto arg_name   = std::get<0>(a);
@@ -76,7 +86,7 @@ namespace cx::core::cmdline
             option_parsers[arg_name] = [this, arg_name, property, type](cx::usize id, const std::vector<std::string_view>& args) {
                 if(args[id] == arg_name) {
                     auto visitor = make_argument_visitor(
-                    [this, id, &args, type](std::string OptionType::* s){
+                    [this, id, &args, type](ptm_string s) {
                         if(id < args.size() - 1) {
                             // in a bash shell "these three words" within quotation, is considered 1 argument. We need to check for this condition
                             if(type == SINGLE_VALUE) { 
@@ -92,25 +102,22 @@ namespace cx::core::cmdline
                             }
                         }
                     },
-                    [this, id, &args](cx::uint OptionType::* i){
+                    [this, id, &args](ptm_uint u) {
+                        if(id < args.size() - 1) {
+                            std::stringstream value;
+                            value << args[id+1];
+                            value >> this->*u;
+                        }
+                    },
+                    [this, id, &args](ptm_int i) { 
                         if(id < args.size() - 1) {
                             std::stringstream value;
                             value << args[id+1];
                             value >> this->*i;
                         }
                     },
-                    [this, id, &args](int OptionType::* i){
-                        if(id < args.size() - 1) {
-                            std::stringstream value;
-                            value << args[id+1];
-                            value >> this->*i;
-                        }
-                    },
-                    [this, type](bool OptionType::* b){
-                        // This is to show that, if we set a flag to something else, it will simply do nothing. Error handling will be added (maybe)
-                        if(type == PropertyType::FLAG) {
-                            this->*b = true;
-                        }
+                    [this](ptm_bool b) {
+                        this->*b = true;
                     });
                     std::visit(visitor, property);
                 }
@@ -119,3 +126,5 @@ namespace cx::core::cmdline
 
     };
 } // namespace cx::util
+
+
